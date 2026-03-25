@@ -46,25 +46,55 @@ graph LR
 
 - **Publish** your skills once with `publish-skills`
 - **Share** them via a central Git repository
-- **Discover** them with `npx skills search <topic>`
-- **Install** them with `npx skills install <skill-name>`
+- **Discover** them with `npx skills find <topic>`
+- **Install** them with `npx skills add <repo-or-skill>`
 
 ---
 
 ## 📦 What's a Skill?
 
-A **skill** is a reusable package of prompts, templates, and configurations that supercharge AI agents like Claude, Gemini, and Cline.
+A **skill** is a reusable package of instructions that supercharge AI agents like Claude, Gemini, Cursor, and 40+ others.
 
 ```
 my-awesome-skill/
-├── SKILL.md           # 📋 Metadata (name, version, agents supported)
-├── manifest.json      # ⚙️  Agent compatibility config
-├── README.md          # 📖 Usage instructions
-└── content/
-    ├── prompts/       # 💬 Prompt templates (.md files)
-    ├── templates/     # 📄 Code/config templates
-    └── resources/     # 🖼️  Images, diagrams, etc.
+├── SKILL.md           # 📋 Required: YAML frontmatter + instructions
+├── README.md          # 📖 Optional: Usage documentation
+└── content/           # 📁 Optional: Prompts, templates, resources
+    ├── prompts/
+    ├── templates/
+    └── resources/
 ```
+
+### SKILL.md Format
+
+```markdown
+---
+name: my-skill
+description: What this skill does and when to use it
+---
+
+# My Skill
+
+Detailed instructions for the agent to follow when this skill is activated.
+
+## When to Use
+
+Describe the scenarios where this skill should be used.
+
+## Steps
+
+1. First, do this
+2. Then, do that
+```
+
+**Required fields:**
+- `name`: Unique identifier (lowercase, hyphens allowed)
+- `description`: Brief explanation (1-2 sentences)
+
+**Optional fields:**
+- `metadata.internal`: Set to `true` to hide from normal discovery (WIP/internal skills)
+
+That's it! No separate `manifest.json` needed. The `SKILL.md` file contains everything.
 
 ---
 
@@ -102,12 +132,12 @@ npx publish-skills create
 Interactive wizard guides you through:
 
 - Skill name & description
-- Target AI agents (Claude, Gemini, Cline)
+- Target AI agents (Claude, Gemini, Cursor, etc.)
 - License selection
 
 ### 2. **Build** Your Skill
 
-Add prompts, templates, and resources to the generated structure. Edit `SKILL.md` and `manifest.json` to configure agent compatibility.
+Add content to the generated structure. Edit `SKILL.md` with your instructions. Optionally add `content/` with prompts, templates, and resources.
 
 ### 3. **Publish** Your Skill
 
@@ -129,46 +159,24 @@ The tool:
 
 ### 4. **Share** with the World
 
-Once your PR is merged, anyone can install your skill:
+Once your PR is merged to the skills repository, anyone can install your skill:
 
 ```bash
-npx skills install your-skill-name
+# List available skills in a repo
+npx skills add vercel-labs/agent-skills --list
+
+# Install a specific skill
+npx skills add vercel-labs/agent-skills --skill my-awesome-skill
+
+# Install all skills from a repo
+npx skills add vercel-labs/agent-skills --all
+
+# Install to specific agents
+npx skills add vercel-labs/agent-skills -a claude-code -a cursor
+
+# Install globally (available in all projects)
+npx skills add vercel-labs/agent-skills -g --skill my-awesome-skill
 ```
-
----
-
-## 📋 The manifest.json File
-
-The `manifest.json` file tells agent runtimes (Claude, Gemini, Cline) **how to install and use** your skill.
-
-```json
-{
-  "name": "my-skill",
-  "version": "1.0.0",
-  "agents": {
-    "claude": {
-      "supported": true,
-      "installPath": "~/.claude/skills/",
-      "setupScript": "setup.sh"
-    },
-    "gemini": {
-      "supported": true,
-      "installPath": "~/.gemini/skills/"
-    },
-    "cline": {
-      "supported": false
-    }
-  }
-}
-```
-
-**Key fields:**
-
-- `agents.*.supported` - Which AI agents can use this skill
-- `agents.*.installPath` - Where the agent should install the skill
-- `agents.*.setupScript` - Optional script to run after installation
-
-This allows `npx skills install` to automatically place skills in the correct location for each agent.
 
 ---
 
@@ -224,31 +232,12 @@ Settings stored at `~/.publish-skills/config.json`:
 | **Multi-platform**         | GitHub, GitLab, Bitbucket                  |
 | **Secure credentials**     | Stored in platform-native keychains        |
 | **PR-based workflow**      | Review process, attribution, history       |
-| **Agent-agnostic**         | Works with Claude, Gemini, Cline, and more |
+| **Agent-agnostic**         | Works with 40+ AI coding agents            |
 | **Open ecosystem**         | Anyone can create and share skills         |
 
 ---
 
-## 📚 Example Skills
-
-Once published, skills can be installed by anyone:
-
-```bash
-# Search for skills
-npx skills search react
-
-# Install a skill
-npx skills install react-best-practices
-
-# List installed skills
-npx skills list
-```
-
-_Want to see example skills? Check out the [skills repository](https://github.com/vercel-labs/agent-skills) for inspiration._
-
----
-
-## 🔒 Supported Platforms
+## 🔒 Supported Git Platforms
 
 | Platform        | Status     | API Library       |
 | --------------- | ---------- | ----------------- |
@@ -256,6 +245,26 @@ _Want to see example skills? Check out the [skills repository](https://github.co
 | GitLab          | ✅ Phase 1 | `@gitbeaker/rest` |
 | Bitbucket       | ✅ Phase 1 | `bitbucket`       |
 | Self-hosted Git | 🚧 Phase 2 | Git CLI           |
+
+---
+
+## 🤖 Supported AI Agents
+
+The `skills` package manager supports **40+ agents**, including:
+
+| Agent | `--agent` flag |
+| ----- | -------------- |
+| Claude Code | `claude-code` |
+| Cursor | `cursor` |
+| GitHub Copilot | `github-copilot` |
+| Cline | `cline` |
+| OpenCode | `opencode` |
+| Codex | `codex` |
+| Windsurf | `windsurf` |
+| OpenHands | `openhands` |
+| And 30+ more... | |
+
+See the [full list](https://github.com/vercel-labs/skills#supported-agents) in the skills documentation.
 
 ---
 
@@ -308,6 +317,8 @@ MIT © [Anuj Jindal](https://www.linkedin.com/in/anuj-jindal-profile/)
 ## 🔗 Related
 
 - **[skills](https://www.npmjs.com/package/skills)** - The companion package manager for discovering and installing skills
+- **[skills GitHub repo](https://github.com/vercel-labs/skills)** - Skills package source and documentation
+- **[skills.sh](https://skills.sh)** - Skills directory and discovery
 - **[ROADMAP.md](./ROADMAP.md)** - Implementation plan and future features
 - **[PLAN.md](./PLAN.md)** - Requirements, architecture, and data models
 
