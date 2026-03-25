@@ -1,0 +1,25 @@
+node_modules/
+dist/
+coverage/
+.nyc_output/
+.publish-skills/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Config
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
