@@ -1,189 +1,336 @@
-# publish-skills
+<div align="center">
 
-A CLI tool that publishes AI agent skills to Git repositories via Pull/Merge Requests.
+# 🚀 publish-skills
 
-```
+[![NPM Version](https://img.shields.io/npm/v/publish-skills?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/publish-skills)
+[![License](https://img.shields.io/npm/l/publish-skills?style=for-the-badge)](LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/your-username/publish-skills/publish.yml?style=for-the-badge&logo=github)](https://github.com/your-username/publish-skills/actions)
+[![GitHub Pages](https://img.shields.io/badge/docs-github%20pages-667eea?style=for-the-badge&logo=github)](https://jindalanuj.github.io/publish-skills/)
+[![Code Style](https://img.shields.io/badge/code%20style-prettier-ff69b4?style=for-the-badge&logo=prettier)](https://prettier.io)
+
+**Publish AI agent skills to Git repositories in one command.**
+
+</div>
+
+---
+
+## ⚡ Quick Start
+
+```bash
 npx publish-skills publish
 ```
 
-Skills are contributed as PRs to a Git repo (GitHub, GitLab, Bitbucket). Discovery and
-installation are handled by external tools like [npx skills](https://github.com/vercel-labs/agent-skills).
+That's it! Your skill is now a Pull Request away from being shared with the world.
 
 ---
 
-## Architecture
+## 🎯 What Does It Do?
 
+`publish-skills` bridges the gap between **creating** AI agent skills and **sharing** them with the community.
+
+### The Magic Combo: `publish-skills` + `skills`
+
+| Step | Tool               | What It Does                                             |
+| ---- | ------------------ | -------------------------------------------------------- |
+| 1️⃣   | **publish-skills** | 📤 Publish your skill to a Git repository via PR/MR      |
+| 2️⃣   | **skills** (npx)   | 🔍 Discover, download & install skills from the registry |
+
+```mermaid
+graph LR
+    A[You create a skill] --> B[npx publish-skills publish]
+    B --> C[PR to skills repo]
+    C --> D[Skills package manager]
+    D --> E[Everyone can install!]
 ```
-┌─────────────────────────────────────┐
-│  Layer 1: publish-skills (this)     │
-│  create · validate · publish        │
-└──────────────────┬──────────────────┘
-                   │  PR/MR via API
-                   v
-        ┌─────────────────────┐
-        │  Git Repository     │
-        │  skills/            │
-        │  ├─ skill-abc/      │
-        │  └─ skill-xyz/      │
-        └─────────────────────┘
-                   │
-                   v
-┌─────────────────────────────────────┐
-│  Layer 2: External Package Managers │
-│  (discovery · download · install)   │
-│  e.g. npx skills  — NOT this tool   │
-└─────────────────────────────────────┘
-```
+
+**Together, they create a complete ecosystem:**
+
+- **Publish** your skills once with `publish-skills`
+- **Share** them via a central Git repository
+- **Discover** them with `npx skills find <topic>`
+- **Install** them with `npx skills add <repo-or-skill>`
 
 ---
 
-## Commands
+## 📦 What's a Skill?
+
+A **skill** is a reusable package of instructions that supercharge AI agents like Claude, Gemini, Cursor, and 40+ others.
+
+```
+my-awesome-skill/
+├── SKILL.md           # 📋 Required: YAML frontmatter + instructions
+├── README.md          # 📖 Optional: Usage documentation
+└── content/           # 📁 Optional: Prompts, templates, resources
+    ├── prompts/
+    ├── templates/
+    └── resources/
+```
+
+### SKILL.md Format
+
+```markdown
+---
+name: my-skill
+description: What this skill does and when to use it
+---
+
+# My Skill
+
+Detailed instructions for the agent to follow when this skill is activated.
+
+## When to Use
+
+Describe the scenarios where this skill should be used.
+
+## Steps
+
+1. First, do this
+2. Then, do that
+```
+
+**Required fields:**
+
+- `name`: Unique identifier (lowercase, hyphens allowed)
+- `description`: Brief explanation (1-2 sentences)
+
+**Optional fields:**
+
+- `metadata.internal`: Set to `true` to hide from normal discovery (WIP/internal skills)
+
+That's it! No separate `manifest.json` needed. The `SKILL.md` file contains everything.
+
+---
+
+## 🎨 Commands at a Glance
 
 ```bash
-# Create a new skill from template
+# 🏗️  Create a new skill from template
 npx publish-skills create
 
-# Validate a skill's structure and metadata
+# ✅ Validate your skill before publishing
 npx publish-skills validate [path]
 
-# Publish skill — clones repo, creates branch, opens PR/MR
+# 🚀 Publish your skill (creates PR/MR)
 npx publish-skills publish [skill-path]
-npx publish-skills publish --repository production
-npx publish-skills publish --branch feature/my-branch
-npx publish-skills publish --dry-run
 
-# Authenticate with a Git platform
+# 🔐 Login/Logout to Git platforms
 npx publish-skills login
 npx publish-skills logout
 
-# Manage configuration
-npx publish-skills config set repositories.default.url <url>
-npx publish-skills config get author
+# ⚙️  Manage configuration
 npx publish-skills config list
+npx publish-skills config set <key> <value>
 ```
 
 ---
 
-## Publish Flow
+## 🔧 How It Works
 
+### 1. **Create** Your Skill
+
+```bash
+npx publish-skills create
 ```
+
+Interactive wizard guides you through:
+
+- Skill name & description
+- Target AI agents (Claude, Gemini, Cursor, etc.)
+- License selection
+
+### 2. **Build** Your Skill
+
+Add content to the generated structure. Edit `SKILL.md` with your instructions. Optionally add `content/` with prompts, templates, and resources.
+
+### 3. **Publish** Your Skill
+
+```bash
 npx publish-skills publish
-  1. Validate skill structure
-  2. Load or prompt for repository config  → ~/.publish-skills/config.json
-  3. Clone / update repository locally
-  4. Create branch: feature/<skill-name>
-  5. Copy skill to skills/<skill-name>/
-  6. Commit: "Add skill: <name> v<version>"
-  7. Push branch to origin
-  8. Create Pull/Merge Request via platform API
-  9. Display PR/MR URL
+```
+
+The tool:
+
+1. ✅ Validates your skill structure
+2. 🔐 Loads your Git credentials
+3. 📥 Clones the target repository
+4. 🌿 Creates a feature branch
+5. 📁 Copies your skill to `skills/<your-skill>/`
+6. 💾 Commits with a clear message
+7. 🚀 Pushes the branch
+8. 🔀 Opens a Pull/Merge Request
+9. 🎉 Displays the PR URL
+
+### 4. **Share** with the World
+
+Once your PR is merged to the skills repository, anyone can install your skill:
+
+```bash
+# List available skills in a repo
+npx skills add vercel-labs/agent-skills --list
+
+# Install a specific skill
+npx skills add vercel-labs/agent-skills --skill my-awesome-skill
+
+# Install all skills from a repo
+npx skills add vercel-labs/agent-skills --all
+
+# Install to specific agents
+npx skills add vercel-labs/agent-skills -a claude-code -a cursor
+
+# Install globally (available in all projects)
+npx skills add vercel-labs/agent-skills -g --skill my-awesome-skill
 ```
 
 ---
 
-## Skill Folder Structure
+## 🛠️ Setup & Configuration
 
-```
-my-skill/
-├── SKILL.md           # Metadata (name, version, author, agent support)
-├── manifest.json      # Agent compatibility config
-├── README.md          # Usage guide
-└── content/
-    ├── prompts/       # Prompt templates (.md)
-    ├── templates/     # Code/config templates
-    └── resources/     # Images, diagrams, etc.
-```
+### First-Time Setup
 
-**`SKILL.md` frontmatter:**
+```bash
+# 1. Login to your Git platform (GitHub/GitLab/Bitbucket)
+npx publish-skills login
 
-```yaml
----
-name: my-skill
-version: 1.0.0
-author: Jane Doe
-license: MIT
-description: Reusable React patterns
-keywords: [react, patterns]
-tags: [frontend, javascript]
-agents:
-  claude:
-    supported: true
-  gemini:
-    supported: true
----
+# 2. Configure the target repository
+# Example for GitHub:
+npx publish-skills config set repositories.default.url https://github.com/your-org/skills-repo
+# Example for GitLab:
+npx publish-skills config set repositories.default.url https://gitlab.com/your-group/skills-repo
+# Example for Bitbucket:
+npx publish-skills config set repositories.default.url https://bitbucket.org/your-team/skills-repo
+
+# 3. Publish your first skill!
+npx publish-skills publish ./my-skill
 ```
 
----
+### Configuration File
 
-## Configuration
-
-Stored at `~/.publish-skills/config.json`:
+Settings stored at `~/.publish-skills/config.json`:
 
 ```json
 {
-  "author": { "name": "Jane Doe", "email": "jane@example.com" },
+  "author": {
+    "name": "Your Name",
+    "email": "you@example.com"
+  },
   "repositories": {
     "default": {
       "platform": "github",
-      "url": "https://github.com/org/skills-registry",
+      "url": "https://github.com/your-org/skills-repo",
       "targetBranch": "main",
       "skillsPath": "skills/"
     }
   },
-  "defaultRepository": "default",
-  "ui": { "verbosity": "normal" }
+  "defaultRepository": "default"
 }
 ```
 
-Authentication tokens are stored securely via platform credential managers
-(macOS Keychain · Linux Pass · Windows Credential Manager).
+---
+
+## 🌟 Why Use publish-skills?
+
+| ✅ Feature                 | Benefit                              |
+| -------------------------- | ------------------------------------ |
+| **One-command publishing** | No manual Git operations             |
+| **Multi-platform**         | GitHub, GitLab, Bitbucket            |
+| **Secure credentials**     | Stored in platform-native keychains  |
+| **PR-based workflow**      | Review process, attribution, history |
+| **Agent-agnostic**         | Works with 40+ AI coding agents      |
+| **Open ecosystem**         | Anyone can create and share skills   |
 
 ---
 
-## Supported Platforms
+## 🔒 Supported Git Platforms
 
-| Platform        | Phase   | API               |
-| --------------- | ------- | ----------------- |
-| GitHub          | Phase 1 | `@octokit/rest`   |
-| GitLab          | Phase 1 | `@gitbeaker/rest` |
-| Bitbucket       | Phase 1 | `bitbucket`       |
-| Self-hosted Git | Phase 2 | Git CLI           |
+| Platform        | Status     | API Library       |
+| --------------- | ---------- | ----------------- |
+| GitHub          | ✅ Phase 1 | `@octokit/rest`   |
+| GitLab          | ✅ Phase 1 | `@gitbeaker/rest` |
+| Bitbucket       | ✅ Phase 1 | `bitbucket`       |
+| Self-hosted Git | 🚧 Phase 2 | Git CLI           |
 
 ---
 
-## Quick Start (Development)
+## 🤖 Supported AI Agents
+
+The `skills` package manager supports **40+ agents**, including:
+
+| Agent           | `--agent` flag   |
+| --------------- | ---------------- |
+| Claude Code     | `claude-code`    |
+| Cursor          | `cursor`         |
+| GitHub Copilot  | `github-copilot` |
+| Cline           | `cline`          |
+| OpenCode        | `opencode`       |
+| Codex           | `codex`          |
+| Windsurf        | `windsurf`       |
+| OpenHands       | `openhands`      |
+| And 30+ more... |                  |
+
+See the [full list](https://github.com/vercel-labs/skills#supported-agents) in the skills documentation.
+
+---
+
+## 🚀 For Developers
+
+### Local Development
 
 ```bash
+# Clone and setup
+git clone https://github.com/your-username/publish-skills
+cd publish-skills
 npm install
+
+# Build
 npm run build
+
+# Link for testing
 npm link
 
+# Try it out
 publish-skills --version
 publish-skills create
 ```
 
+### Tech Stack
+
+- **Language**: TypeScript 5 (strict mode)
+- **CLI**: yargs + inquirer
+- **Git**: simple-git
+- **APIs**: @octokit/rest, @gitbeaker/rest, bitbucket
+- **Security**: keytar (platform-native credential storage)
+- **UI**: chalk, ora, cli-table3
+
 ---
 
-## Release Process (Changesets)
+## 📄 License
 
-This repository uses Changesets to keep package versions and changelogs in sync.
+MIT © [Anuj Jindal](https://www.linkedin.com/in/anuj-jindal-profile/)
 
-```bash
-# 1) For every user-facing change, add a changeset in your branch
-npm run changeset
+---
 
-# 2) Merge PR to main
-# CI opens/updates a "chore: version packages" PR automatically
+## 🙋 Support
 
-# 3) Merge version PR
-# CI publishes to npm using Trusted Publishing (OIDC)
-```
+- **Issues**: [GitHub Issues](https://github.com/your-username/publish-skills/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-username/publish-skills/discussions)
+- **LinkedIn**: [Anuj Jindal](https://www.linkedin.com/in/anuj-jindal-profile/)
 
-Notes:
+---
 
-- Pull requests to `main` run a changeset check and fail if no changeset is present.
-- The release workflow creates the version PR, then publishes from `main` once the version PR is merged.
-- No long-lived `NPM_TOKEN` secret is required.
+## 🔗 Related
 
-See [ROADMAP.md](ROADMAP.md) for the week-by-week implementation plan and
-[PLAN.md](PLAN.md) for requirements, architecture, and data models.
+- **[skills](https://www.npmjs.com/package/skills)** - The companion package manager for discovering and installing skills
+- **[skills GitHub repo](https://github.com/vercel-labs/skills)** - Skills package source and documentation
+- **[skills.sh](https://skills.sh)** - Skills directory and discovery
+- **[ROADMAP.md](./ROADMAP.md)** - Implementation plan and future features
+- **[PLAN.md](./PLAN.md)** - Requirements, architecture, and data models
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the AI agent community**
+
+[⭐ Star this repo](https://github.com/your-username/publish-skills) • [🐦 Follow on Twitter](https://twitter.com/your-handle) • [💼 Connect on LinkedIn](https://www.linkedin.com/in/anuj-jindal-profile/)
+
+</div>

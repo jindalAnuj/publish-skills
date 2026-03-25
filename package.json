@@ -39,6 +39,7 @@
     "LICENSE",
     "package.json"
   ],
+  "homepage": "https://jindalanuj.github.io/publish-skills",
   "repository": {
     "type": "git",
     "url": "https://github.com/jindalAnuj/publish-skills"

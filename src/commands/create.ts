@@ -70,10 +70,7 @@ async function createSkillDirectory(
       },
     };
 
-    fs.writeFileSync(
-      path.join(skillPath, 'manifest.json'),
-      JSON.stringify(manifest, null, 2)
-    );
+    fs.writeFileSync(path.join(skillPath, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
     // Create SKILL.md template
     const skillMd = `# ${metadata.name || skillName}

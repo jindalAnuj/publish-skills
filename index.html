@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="publish-skills - Publish AI agent skills to Git repositories in one command. Works with Claude, Gemini, Cursor, and 40+ agents.">
+    <meta name="keywords" content="publish-skills, AI skills, agent skills, Claude, Gemini, Cursor, GitHub, GitLab, Bitbucket, PR, Pull Request, publish, share, CLI, npm">
+    <meta name="author" content="Anuj Jindal">
+    <meta property="og:title" content="publish-skills - Publish AI Agent Skills with One Command">
+    <meta property="og:description" content="Bridge the gap between creating AI agent skills and sharing them with the community. Publish to GitHub, GitLab, or Bitbucket via PR/MR.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jindalanuj.github.io/publish-skills/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="publish-skills - Publish AI Agent Skills">
+    <meta name="twitter:description" content="Publish AI agent skills to Git repositories in one command. Works with Claude, Gemini, Cursor, and 40+ agents.">
+    <title>publish-skills - Publish AI Agent Skills to Git Repositories</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .badges {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #f0f0f0;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #333;
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+        }
+
+        .badge:hover {
+            transform: translateY(-2px);
+        }
+
+        .badge.npm {
+            background: #cb3837;
+            color: white;
+        }
+
+        .badge.github {
+            background: #24292e;
+            color: white;
+        }
+
+        section {
+            margin: 2rem 0;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        .quick-start {
+            background: #667eea;
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .quick-start h2 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .quick-start code {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 1.2rem;
+            padding: 1rem 2rem;
+            display: inline-block;
+            border-radius: 8px;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+
+        .cta {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .cta a {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 0.5rem;
+            transition: background 0.3s;
+        }
+
+        .cta a:hover {
+            background: #764ba2;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #f0f0f0;
+            color: #666;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .supported-agents {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .agent {
+            background: #f9f9f9;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            .container {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 publish-skills</h1>
+            <p class="tagline">Publish AI agent skills to Git repositories in one command</p>
+            <div class="badges">
+                <a href="https://www.npmjs.com/package/publish-skills" class="badge npm">npm</a>
+                <a href="https://github.com/jindalAnuj/publish-skills" class="badge github">GitHub</a>
+                <a href="https://github.com/vercel-labs/skills" class="badge">skills</a>
+            </div>
+        </header>
+
+        <div class="quick-start">
+            <h2>⚡ Quick Start</h2>
+            <code>npx publish-skills publish</code>
+            <p style="margin-top: 1rem;">That's it! Your skill is now a Pull Request away from being shared.</p>
+        </div>
+
+        <section>
+            <h2>🎯 What It Does</h2>
+            <p><strong>publish-skills</strong> bridges the gap between creating AI agent skills and sharing them with the community. Combined with the <code>skills</code> package manager, it creates a complete publishing and distribution ecosystem.</p>
+        </section>
+
+        <section>
+            <h2>🔄 How It Works</h2>
+            <ol>
+                <li><strong>Create</strong> your skill with <code>npx publish-skills create</code></li>
+                <li><strong>Build</strong> your skill by editing <code>SKILL.md</code> and adding content</li>
+                <li><strong>Publish</strong> with <code>npx publish-skills publish</code> (creates a PR/MR)</li>
+                <li><strong>Share</strong> - once merged, anyone can install with <code>npx skills add <repo></code></li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>🤖 Supported AI Agents</h2>
+            <p>Skills published with publish-skills work with <strong>40+ AI coding agents</strong>:</p>
+            <div class="supported-agents">
+                <div class="agent">Claude Code</div>
+                <div class="agent">Cursor</div>
+                <div class="agent">GitHub Copilot</div>
+                <div class="agent">Cline</div>
+                <div class="agent">OpenCode</div>
+                <div class="agent">Codex</div>
+                <div class="agent">Windsurf</div>
+                <div class="agent">OpenHands</div>
+                <div class="agent">And 30+ more...</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>🔒 Supported Git Platforms</h2>
+            <ul>
+                <li><strong>GitHub</strong> - via @octokit/rest</li>
+                <li><strong>GitLab</strong> - via @gitbeaker/rest</li>
+                <li><strong>Bitbucket</strong> - via bitbucket API</li>
+                <li><strong>Self-hosted Git</strong> - via Git CLI (Phase 2)</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>📦 What's a Skill?</h2>
+            <p>A skill is a reusable package of instructions that extends your AI agent's capabilities:</p>
+            <pre><code>my-awesome-skill/
+├── SKILL.md           # Required: YAML frontmatter + instructions
+├── README.md          # Optional: documentation
+└── content/           # Optional: prompts, templates, resources
+    ├── prompts/
+    ├── templates/
+    └── resources/</code></pre>
+        </section>
+
+        <section>
+            <h2>🛠️ Commands</h2>
+            <ul>
+                <li><code>npx publish-skills create</code> - Create new skill from template</li>
+                <li><code>npx publish-skills validate [path]</code> - Validate skill structure</li>
+                <li><code>npx publish-skills publish [path]</code> - Publish skill (creates PR/MR)</li>
+                <li><code>npx publish-skills login/logout</code> - Authenticate with Git platforms</li>
+                <li><code>npx publish-skills config</code> - Manage configuration</li>
+            </ul>
+        </section>
+
+        <div class="cta">
+            <a href="https://www.npmjs.com/package/publish-skills">📦 Install from npm</a>
+            <a href="https://github.com/jindalAnuj/publish-skills">⭐ Star on GitHub</a>
+            <a href="https://github.com/vercel-labs/skills">🔍 Browse Skills</a>
+        </div>
+
+        <footer>
+            <p>Made with ❤️ for the AI agent community</p>
+            <p>By <a href="https://www.linkedin.com/in/anuj-jindal-profile/">Anuj Jindal</a></p>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">
+                <a href="https://github.com/jindalAnuj/publish-skills/blob/main/README.md">View Full Documentation</a> |
+                <a href="https://github.com/jindalAnuj/publish-skills/issues">Report Issue</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
