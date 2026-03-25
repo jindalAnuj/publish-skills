@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+
 import * as os from 'os';
 
 const SERVICE = 'publish-skills';

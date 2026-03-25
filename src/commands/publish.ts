@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import yargs from 'yargs';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -11,7 +10,6 @@ import { SkillValidator } from '../validators/SkillValidator';
 import { GitManager } from '../git/GitManager';
 import { PullRequestCreator } from '../git/PullRequestCreator';
 import { ConfigManager } from '../config/ConfigManager';
-import type { RepositoryConfig } from '../models/Config';
 
 // ─────────────────────────────────────────────────────────────
 // GitHub OAuth App client ID.
@@ -108,6 +106,44 @@ interface SelectedRepo {
   repo: string;
   url: string;
   defaultBranch: string;
+}
+
+async function buildAndSaveRepositoryConfig(
+  selected: SelectedRepo,
+  configManager: ConfigManager
+): Promise<{
+  platform: 'github';
+  url: string;
+  localPath: string;
+  targetBranch: string;
+  skillsPath: string;
+}> {
+  const skillsPath = await input({
+    message: 'Path inside the repo where skills live:',
+    default: 'skills',
+  });
+
+  const repoConfig = {
+    platform: 'github' as const,
+    url: selected.url,
+    localPath: path.join(configManager.getStorageDir(), 'repos', selected.repo),
+    targetBranch: selected.defaultBranch,
+    skillsPath,
+  };
+
+  configManager.setRepository(selected.repo, repoConfig);
+  return repoConfig;
+}
+
+async function isCachedRepositoryReachable(token: string, repoUrl: string): Promise<boolean> {
+  try {
+    const { owner, repo } = PullRequestCreator.parseGitHubRepo(repoUrl);
+    const octokit = new Octokit({ auth: token });
+    await octokit.rest.repos.get({ owner, repo });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function selectOrCreateRepo(token: string): Promise<SelectedRepo> {
@@ -219,24 +255,36 @@ export const handler = async (argv: PublishArguments): Promise<void> => {
 
     if (repoConfig) {
       const repoName = configManager.get().defaultRepository;
-      console.log(chalk.gray(`✔ Publishing to ${chalk.bold(repoName)} (cached)\n`));
-    } else {
-      const selected = await selectOrCreateRepo(token);
+      console.log(chalk.gray(`✔ Publishing to ${chalk.bold(repoName)} (cached)`));
+      console.log(chalk.gray(`  ${repoConfig.url}\n`));
 
-      const skillsPath = await input({
-        message: 'Path inside the repo where skills live:',
-        default: 'skills',
+      const useCached = await confirm({
+        message: `Use this cached repository?`,
+        default: true,
       });
 
-      repoConfig = {
-        platform: 'github',
-        url: selected.url,
-        localPath: path.join(os.homedir(), '.publish-skills', 'repos', selected.repo),
-        targetBranch: selected.defaultBranch,
-        skillsPath,
-      };
+      if (!useCached) {
+        repoConfig = undefined;
+      }
+    }
 
-      configManager.setRepository(selected.repo, repoConfig);
+    if (repoConfig) {
+      spinner.start('Validating cached repository...');
+      const reachable = await isCachedRepositoryReachable(token, repoConfig.url);
+      if (reachable) {
+        spinner.succeed('Cached repository is valid.');
+      } else {
+        spinner.warn('Cached repository is invalid or inaccessible. Please choose a repository.');
+        repoConfig = undefined;
+      }
+    }
+
+    if (!repoConfig) {
+      const selected = await selectOrCreateRepo(token);
+      repoConfig = await buildAndSaveRepositoryConfig(selected, configManager);
+      console.log(
+        chalk.gray(`✔ Publishing to ${chalk.bold(selected.owner + '/' + selected.repo)}\n`)
+      );
     }
 
     const skillName = skillMeta.name as string;
@@ -289,7 +337,6 @@ export const handler = async (argv: PublishArguments): Promise<void> => {
     spinner.succeed(chalk.green('Pull request created!'));
     console.log(`\n  ${chalk.bold('PR URL:')} ${chalk.cyan(pr.url)}\n`);
     console.log(chalk.gray('  Run with --reset to change the repository or re-authenticate.\n'));
-
   } catch (error) {
     spinner.fail(chalk.red('Publish failed.'));
     console.error(chalk.red('\nError:'), (error as Error).message);

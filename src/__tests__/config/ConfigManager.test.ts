@@ -6,14 +6,17 @@ import type { RepositoryConfig } from '../../models/Config';
 
 describe('ConfigManager', () => {
   let tempDir: string;
-  let originalConfigFile: string;
+  let originalHome: string | undefined;
 
   beforeEach(() => {
     // Create a temporary directory for config files
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'publish-skills-test-'));
+    originalHome = process.env.HOME;
+    process.env.HOME = tempDir;
   });
 
   afterEach(() => {
+    process.env.HOME = originalHome;
     // Clean up temp directory
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true });

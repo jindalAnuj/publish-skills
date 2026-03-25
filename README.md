@@ -142,12 +142,12 @@ Authentication tokens are stored securely via platform credential managers
 
 ## Supported Platforms
 
-| Platform        | Phase   | API                   |
-|-----------------|---------|-----------------------|
-| GitHub          | Phase 1 | `@octokit/rest`       |
-| GitLab          | Phase 1 | `@gitbeaker/rest`     |
-| Bitbucket       | Phase 1 | `bitbucket`           |
-| Self-hosted Git | Phase 2 | Git CLI               |
+| Platform        | Phase   | API               |
+| --------------- | ------- | ----------------- |
+| GitHub          | Phase 1 | `@octokit/rest`   |
+| GitLab          | Phase 1 | `@gitbeaker/rest` |
+| Bitbucket       | Phase 1 | `bitbucket`       |
+| Self-hosted Git | Phase 2 | Git CLI           |
 
 ---
 
@@ -161,6 +161,29 @@ npm link
 publish-skills --version
 publish-skills create
 ```
+
+---
+
+## Release Process (Changesets)
+
+This repository uses Changesets to keep package versions and changelogs in sync.
+
+```bash
+# 1) For every user-facing change, add a changeset in your branch
+npm run changeset
+
+# 2) Merge PR to main
+# CI opens/updates a "chore: version packages" PR automatically
+
+# 3) Merge version PR
+# CI publishes to npm using Trusted Publishing (OIDC)
+```
+
+Notes:
+
+- Pull requests to `main` run a changeset check and fail if no changeset is present.
+- The release workflow creates the version PR, then publishes from `main` once the version PR is merged.
+- No long-lived `NPM_TOKEN` secret is required.
 
 See [ROADMAP.md](ROADMAP.md) for the week-by-week implementation plan and
 [PLAN.md](PLAN.md) for requirements, architecture, and data models.

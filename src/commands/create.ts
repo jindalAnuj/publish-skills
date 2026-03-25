@@ -3,7 +3,7 @@ import * as path from 'path';
 import yargs from 'yargs';
 import chalk from 'chalk';
 import ora from 'ora';
-import { input, select, confirm } from '@inquirer/prompts';
+import { input, confirm } from '@inquirer/prompts';
 import { ValidationError } from '../types';
 import type { Skill } from '../models/Skill';
 

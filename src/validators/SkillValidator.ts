@@ -1,4 +1,4 @@
-import { validate } from 'json-schema';
+
 import type { Skill } from '../models/Skill';
 import { ValidationError } from '../types';
 
@@ -26,7 +26,7 @@ export class SkillValidator {
     // We keep it basic for the MVP as per instructions to prioritize a working publish command.
   }
 
-  public validateContent(contentPath: string): boolean {
+  public validateContent(_contentPath: string): boolean {
     // Validate directory structure and content files
     return true;
   }

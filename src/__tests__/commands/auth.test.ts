@@ -55,7 +55,7 @@ describe('auth command', () => {
       select: jest.fn().mockResolvedValue('github'),
     }));
 
-    const argv: AuthArguments = {
+    const _argv: AuthArguments = {
       action: 'login',
       _: [],
       $0: '',
@@ -76,7 +76,7 @@ describe('auth command', () => {
       select: jest.fn().mockResolvedValue('github'),
     }));
 
-    const argv: AuthArguments = {
+    const _argv: AuthArguments = {
       action: 'logout',
       _: [],
       $0: '',

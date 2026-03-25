@@ -24,6 +24,7 @@ const mockCreateOAuthDeviceAuth = jest.fn();
 const mockGetAuthenticated = jest.fn();
 const mockListForAuthenticatedUser = jest.fn();
 const mockCreateForAuthenticatedUser = jest.fn();
+const mockGetRepo = jest.fn();
 
 jest.mock('../../validators/SkillValidator', () => ({
   SkillValidator: jest.fn().mockImplementation(() => ({
@@ -75,6 +76,7 @@ jest.mock('@octokit/rest', () => ({
       repos: {
         listForAuthenticatedUser: mockListForAuthenticatedUser,
         createForAuthenticatedUser: mockCreateForAuthenticatedUser,
+        get: mockGetRepo,
       },
     },
   })),
@@ -115,6 +117,7 @@ describe('publish command', () => {
       platform: 'github',
     });
     mockParseGitHubRepo.mockReturnValue({ owner: 'acme', repo: 'skills' });
+    mockGetRepo.mockResolvedValue({ data: { id: 1 } });
 
     mockGetConfig.mockReturnValue({ defaultRepository: 'skills-repo' });
   });
@@ -146,6 +149,7 @@ describe('publish command', () => {
 
     expect(mockValidateMetadata).toHaveBeenCalled();
     expect(mockCreateOAuthDeviceAuth).not.toHaveBeenCalled();
+    expect(mockGetRepo).toHaveBeenCalledWith({ owner: 'acme', repo: 'skills' });
 
     expect(mockCloneRepository).toHaveBeenCalledWith(
       'https://github.com/acme/skills.git',
@@ -227,11 +231,7 @@ describe('publish command', () => {
   });
 
   it('should fail and exit when validation throws an error', async () => {
-    const originalExit = process.exit;
-    const mockExit = jest.fn();
     const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
-
-    process.exit = mockExit as never;
 
     mockValidateMetadata.mockImplementation(() => {
       throw new Error('invalid skill metadata');
@@ -253,14 +253,55 @@ describe('publish command', () => {
       $0: '',
     };
 
-    try {
-      await publishHandler(argv);
-      expect(mockExit).toHaveBeenCalledWith(1);
-      expect(mockConsoleError).toHaveBeenCalled();
-      expect(mockCloneRepository).not.toHaveBeenCalled();
-    } finally {
-      process.exit = originalExit;
-      mockConsoleError.mockRestore();
-    }
+    await expect(publishHandler(argv)).rejects.toThrow('process.exit called with "1"');
+    expect(mockConsoleError).toHaveBeenCalled();
+    expect(mockCloneRepository).not.toHaveBeenCalled();
+    mockConsoleError.mockRestore();
+  });
+
+  it('should reprompt and replace cached repository when cached URL is invalid', async () => {
+    mockGetAuthState.mockReturnValue({ token: 'cached-token', login: 'alice' });
+    mockGetDefaultRepository.mockReturnValue({
+      platform: 'github',
+      url: 'https://github.com/test/repo/',
+      localPath: '/tmp/repo',
+      targetBranch: 'main',
+      skillsPath: 'skills',
+    });
+
+    mockGetRepo.mockRejectedValue(new Error('Not found'));
+    mockListForAuthenticatedUser.mockResolvedValue({ data: [] });
+    mockCreateForAuthenticatedUser.mockResolvedValue({
+      data: {
+        owner: { login: 'alice' },
+        name: 'new-skills-repo',
+        clone_url: 'https://github.com/alice/new-skills-repo.git',
+        default_branch: 'main',
+        full_name: 'alice/new-skills-repo',
+      },
+    });
+
+    const argv: PublishArguments = {
+      path: tempSkillDir,
+      reset: false,
+      _: [],
+      $0: '',
+    };
+
+    await publishHandler(argv);
+
+    expect(mockSetRepository).toHaveBeenCalledWith(
+      'new-skills-repo',
+      expect.objectContaining({
+        url: 'https://github.com/alice/new-skills-repo.git',
+        targetBranch: 'main',
+      })
+    );
+
+    expect(mockCloneRepository).toHaveBeenCalledWith(
+      'https://github.com/alice/new-skills-repo.git',
+      expect.stringContaining(path.join('.publish-skills', 'repos', 'new-skills-repo')),
+      'cached-token'
+    );
   });
 });

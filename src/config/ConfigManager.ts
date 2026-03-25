@@ -3,8 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import type { PublishSkillsConfig, RepositoryConfig } from '../models/Config';
 
-const CONFIG_DIR = path.join(os.homedir(), '.publish-skills');
-const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
+const CONFIG_DIR_NAME = '.publish-skills';
 
 const DEFAULT_CONFIG: PublishSkillsConfig = {
   author: { name: '', email: '' },
@@ -21,17 +20,22 @@ interface AuthState {
 
 export class ConfigManager {
   private config: PublishSkillsConfig;
+  private configDir: string;
+  private configFile: string;
 
   constructor() {
+    this.configDir = path.join(os.homedir(), CONFIG_DIR_NAME);
+    this.configFile = path.join(this.configDir, 'config.json');
     this.config = this.load();
   }
 
   private load(): PublishSkillsConfig {
-    if (!fs.existsSync(CONFIG_FILE)) {
+    if (!fs.existsSync(this.configFile)) {
       return { ...DEFAULT_CONFIG };
     }
+
     try {
-      const raw = fs.readFileSync(CONFIG_FILE, 'utf-8');
+      const raw = fs.readFileSync(this.configFile, 'utf-8');
       return JSON.parse(raw) as PublishSkillsConfig;
     } catch {
       return { ...DEFAULT_CONFIG };
@@ -39,10 +43,14 @@ export class ConfigManager {
   }
 
   public save(): void {
-    if (!fs.existsSync(CONFIG_DIR)) {
-      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    if (!fs.existsSync(this.configDir)) {
+      fs.mkdirSync(this.configDir, { recursive: true });
     }
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2), 'utf-8');
+    fs.writeFileSync(this.configFile, JSON.stringify(this.config, null, 2), 'utf-8');
+  }
+
+  public getStorageDir(): string {
+    return this.configDir;
   }
 
   // ── Auth state ──────────────────────────────────────────

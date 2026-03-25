@@ -4,7 +4,6 @@ import ora from 'ora';
 import { select, input, confirm } from '@inquirer/prompts';
 import { Octokit } from '@octokit/rest';
 import { createOAuthDeviceAuth } from '@octokit/auth-oauth-device';
-import { ConfigManager } from '../config/ConfigManager';
 import { CredentialManager } from '../config/CredentialManager';
 import { AuthenticationError } from '../types';
 
