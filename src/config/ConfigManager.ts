@@ -1,14 +1,26 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import type { PublishSkillsConfig, RepositoryConfig } from '../models/Config';
+import type {
+  PublishSkillsConfig,
+  RepositoryConfig,
+  CentralRepositoryConfig,
+} from '../models/Config';
 
 const CONFIG_DIR_NAME = '.publish-skills';
+
+const DEFAULT_CENTRAL_REPO: CentralRepositoryConfig = {
+  owner: 'skill-hub-community',
+  repo: 'skills',
+  skillsPath: 'skills',
+  branch: 'main',
+};
 
 const DEFAULT_CONFIG: PublishSkillsConfig = {
   author: { name: '', email: '' },
   repositories: {},
   defaultRepository: '',
+  centralRepository: DEFAULT_CENTRAL_REPO,
   ui: { verbosity: 'normal' },
 };
 
@@ -87,5 +99,21 @@ export class ConfigManager {
 
   public get(): PublishSkillsConfig {
     return this.config;
+  }
+
+  // ── Central repository config ──────────────────────────
+  public getCentralRepository(): CentralRepositoryConfig {
+    return this.config.centralRepository || DEFAULT_CENTRAL_REPO;
+  }
+
+  public setCentralRepository(config: CentralRepositoryConfig): void {
+    this.config.centralRepository = config;
+    this.save();
+  }
+
+  // ── Auth helpers ─────────────────────────────────────────
+  public isAuthenticated(): boolean {
+    const auth = this.getAuthState();
+    return !!(auth?.token && auth?.login);
   }
 }

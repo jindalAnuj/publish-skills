@@ -1,0 +1,22 @@
+{
+  "name": "smart-commit",
+  "version": "1.0.0",
+  "description": "Create intelligent git commits with automatic changeset management for npm packages",
+  "author": "Anuj Jindal",
+  "triggers": [
+    "commit",
+    "git commit",
+    "changeset",
+    "version bump",
+    "create changeset",
+    "prepare release"
+  ],
+  "tags": [
+    "git",
+    "commit",
+    "changeset",
+    "versioning",
+    "npm",
+    "release"
+  ]
+}

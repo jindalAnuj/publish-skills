@@ -4,8 +4,8 @@ import ora from 'ora';
 import { select, input, confirm } from '@inquirer/prompts';
 import { Octokit } from '@octokit/rest';
 import { createOAuthDeviceAuth } from '@octokit/auth-oauth-device';
-import { CredentialManager } from '../config/CredentialManager';
-import { AuthenticationError } from '../types';
+import { ConfigManager } from '../config/ConfigManager';
+import { AuthenticationError, isUserCancellation } from '../types';
 
 export interface AuthArguments extends yargs.Arguments {
   action?: string;
@@ -46,17 +46,17 @@ async function handleGitHubLogin(): Promise<void> {
 
   // Verify and get login
   const octokit = new Octokit({ auth: token });
-  let login = '';
 
   try {
     const { data } = await octokit.rest.users.getAuthenticated();
-    login = data.login;
+    const login = data.login;
 
-    // Save credentials
-    const credManager = new CredentialManager();
-    await credManager.setToken(`github_${login}`, token);
+    // Save credentials persistently using ConfigManager
+    const configManager = new ConfigManager();
+    configManager.setAuthState({ token, login });
 
     console.log(chalk.green(`✓ Logged in as ${chalk.bold(login)}\n`));
+    console.log(chalk.gray('  Your authentication is saved and will persist across restarts.\n'));
   } catch (error) {
     throw new AuthenticationError('Failed to verify GitHub credentials', { originalError: error });
   }
@@ -75,8 +75,6 @@ async function handleLogin(): Promise<void> {
     ],
   });
 
-  const credManager = new CredentialManager();
-
   if (platform === 'github') {
     await handleGitHubLogin();
   } else if (platform === 'gitlab') {
@@ -89,8 +87,10 @@ async function handleLogin(): Promise<void> {
     try {
       // TODO: Verify token with GitLab API
       spinner.succeed('GitLab token verified');
-      await credManager.setToken('gitlab_token', token);
+      const configManager = new ConfigManager();
+      configManager.setAuthState({ token, login: 'gitlab_user' });
       console.log(chalk.green('\n✓ Successfully authenticated with GitLab!\n'));
+      console.log(chalk.gray('  Your authentication is saved and will persist across restarts.\n'));
     } catch (error) {
       spinner.fail('Token verification failed');
       throw error;
@@ -109,9 +109,10 @@ async function handleLogin(): Promise<void> {
     try {
       // TODO: Verify credentials with Bitbucket API
       spinner.succeed('Bitbucket credentials verified');
-      await credManager.setToken('bitbucket_username', username);
-      await credManager.setToken('bitbucket_apppassword', appPassword);
+      const configManager = new ConfigManager();
+      configManager.setAuthState({ token: appPassword, login: username });
       console.log(chalk.green('\n✓ Successfully authenticated with Bitbucket!\n'));
+      console.log(chalk.gray('  Your authentication is saved and will persist across restarts.\n'));
     } catch (error) {
       spinner.fail('Credential verification failed');
       throw error;
@@ -123,17 +124,16 @@ async function handleLogin(): Promise<void> {
  * Handles logout action
  */
 async function handleLogout(): Promise<void> {
-  const platforms = await select({
-    message: 'Choose a platform to logout from',
-    choices: [
-      { name: 'GitHub', value: 'github' },
-      { name: 'GitLab', value: 'gitlab' },
-      { name: 'Bitbucket', value: 'bitbucket' },
-    ],
-  });
+  const configManager = new ConfigManager();
 
+  if (!configManager.isAuthenticated()) {
+    console.log(chalk.yellow('\n✗ Not currently logged in.\n'));
+    return;
+  }
+
+  const authState = configManager.getAuthState();
   const confirmed = await confirm({
-    message: `Remove authentication for ${platforms}?`,
+    message: `Remove authentication for ${authState?.login}?`,
     default: false,
   });
 
@@ -142,23 +142,12 @@ async function handleLogout(): Promise<void> {
     return;
   }
 
-  const spinner = ora(`Removing ${platforms} authentication...`).start();
+  const spinner = ora('Removing authentication...').start();
 
   try {
-    const credManager = new CredentialManager();
-
-    if (platforms === 'github') {
-      // TODO: Get the current user and delete their token
-      await credManager.deleteToken('github_auth');
-    } else if (platforms === 'gitlab') {
-      await credManager.deleteToken('gitlab_token');
-    } else if (platforms === 'bitbucket') {
-      await credManager.deleteToken('bitbucket_username');
-      await credManager.deleteToken('bitbucket_apppassword');
-    }
-
-    spinner.succeed(`${platforms} authentication removed`);
-    console.log(chalk.green(`\n✓ Successfully logged out from ${platforms}!\n`));
+    configManager.clearAuthState();
+    spinner.succeed('Authentication removed');
+    console.log(chalk.green('\n✓ Successfully logged out!\n'));
   } catch (error) {
     spinner.fail('Failed to remove authentication');
     throw error;
@@ -170,8 +159,17 @@ async function handleLogout(): Promise<void> {
  */
 async function handleStatus(): Promise<void> {
   console.log(chalk.cyan('\n🔐 Authentication Status\n'));
-  console.log(chalk.yellow('  No platform authentication details available yet.\n'));
-  console.log(chalk.gray('  Run: publish-skills auth login\n'));
+
+  const configManager = new ConfigManager();
+
+  if (configManager.isAuthenticated()) {
+    const authState = configManager.getAuthState();
+    console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(authState?.login)}`));
+    console.log(chalk.gray('    Token is stored persistently in ~/.publish-skills/config.json\n'));
+  } else {
+    console.log(chalk.yellow('  ✗ Not logged in\n'));
+    console.log(chalk.gray('  Run: publish-skills auth login\n'));
+  }
 }
 
 /**
@@ -195,7 +193,13 @@ export const handler = async (argv: AuthArguments): Promise<void> => {
         throw new AuthenticationError(`Unknown action: ${action}`);
     }
   } catch (error) {
+    // Handle user cancellation gracefully (Ctrl+C, Escape, etc.)
+    if (isUserCancellation(error)) {
+      console.log(chalk.yellow('\n\n👋 Cancelled. See you next time!\n'));
+      process.exit(0);
+    }
+
     console.error(chalk.red('Error:'), (error as Error).message);
-    process.exit(1);
+    throw error;
   }
 };

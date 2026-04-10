@@ -3,14 +3,25 @@
 # 🚀 publish-skills
 
 [![NPM Version](https://img.shields.io/npm/v/publish-skills?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/publish-skills)
+[![NPM Downloads](https://img.shields.io/npm/dm/publish-skills?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/publish-skills)
 [![License](https://img.shields.io/npm/l/publish-skills?style=for-the-badge)](LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/your-username/publish-skills/publish.yml?style=for-the-badge&logo=github)](https://github.com/your-username/publish-skills/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/jindalAnuj/publish-skills/publish.yml?style=for-the-badge&logo=github)](https://github.com/jindalAnuj/publish-skills/actions)
 [![GitHub Pages](https://img.shields.io/badge/docs-github%20pages-667eea?style=for-the-badge&logo=github)](https://jindalanuj.github.io/publish-skills/)
 [![Code Style](https://img.shields.io/badge/code%20style-prettier-ff69b4?style=for-the-badge&logo=prettier)](https://prettier.io)
 
 **Publish AI agent skills to Git repositories in one command.**
 
+*The easiest way to share Claude, Cursor, Gemini, and Copilot skills with the world.*
+
 </div>
+
+---
+
+## Works With
+
+| AI Agents | Git Platforms |
+|-----------|---------------|
+| Claude Code, Cursor, GitHub Copilot, Gemini, Cline, Codex, Windsurf, OpenHands, and 40+ more | GitHub, GitLab, Bitbucket |
 
 ---
 
@@ -26,7 +37,7 @@ That's it! Your skill is now a Pull Request away from being shared with the worl
 
 ## 🎯 What Does It Do?
 
-`publish-skills` bridges the gap between **creating** AI agent skills and **sharing** them with the community.
+`publish-skills` is a CLI tool that bridges the gap between **creating** AI agent skills and **sharing** them with the community. Whether you're building skills for Claude, Cursor, Gemini, Copilot, or any of the 40+ supported AI coding agents, this tool automates the entire publishing workflow via Pull Requests to GitHub, GitLab, or Bitbucket.
 
 ### The Magic Combo: `publish-skills` + `skills`
 
@@ -65,6 +76,25 @@ my-awesome-skill/
     ├── templates/
     └── resources/
 ```
+
+### 📁 Skills Directory
+
+You can organize multiple skills in a single directory:
+
+```
+skills/
+├── skill-one/
+│   ├── SKILL.md
+│   └── content/
+├── skill-two/
+│   ├── SKILL.md
+│   └── README.md
+└── skill-three/
+    ├── manifest.json
+    └── content/
+```
+
+This allows you to publish multiple skills in a single merge request.
 
 ### SKILL.md Format
 
@@ -111,7 +141,7 @@ npx publish-skills create
 npx publish-skills validate [path]
 
 # 🚀 Publish your skill (creates PR/MR)
-npx publish-skills publish [skill-path]
+npx publish-skills publish [skill-path] [--all]
 
 # 🔐 Login/Logout to Git platforms
 npx publish-skills login
@@ -144,17 +174,39 @@ Add content to the generated structure. Edit `SKILL.md` with your instructions. 
 
 ### 3. **Publish** Your Skill
 
+#### Publish a Single Skill
+
 ```bash
-npx publish-skills publish
+npx publish-skills publish ./my-skill
 ```
+
+#### Publish Multiple Skills
+
+If you have a directory containing multiple skills, you can publish them all at once:
+
+```bash
+# Interactive mode: select which skills to publish
+npx publish-skills publish ./skills
+
+# Non-interactive: publish all skills in the directory
+npx publish-skills publish ./skills --all
+```
+
+When publishing multiple skills:
+
+- All skills are validated before proceeding
+- A single feature branch is created (`feature/multi-skill-<timestamp>`)
+- All selected skills are copied into the repository
+- One commit with all skills is created
+- One Pull Request is opened with details about all skills
 
 The tool:
 
-1. ✅ Validates your skill structure
+1. ✅ Validates your skill structure(s)
 2. 🔐 Loads your Git credentials
 3. 📥 Clones the target repository
 4. 🌿 Creates a feature branch
-5. 📁 Copies your skill to `skills/<your-skill>/`
+5. 📁 Copies your skill(s) to `skills/<skill-name>/`
 6. 💾 Commits with a clear message
 7. 🚀 Pushes the branch
 8. 🔀 Opens a Pull/Merge Request
@@ -277,7 +329,7 @@ See the [full list](https://github.com/vercel-labs/skills#supported-agents) in t
 
 ```bash
 # Clone and setup
-git clone https://github.com/your-username/publish-skills
+git clone https://github.com/jindalAnuj/publish-skills
 cd publish-skills
 npm install
 
@@ -311,19 +363,49 @@ MIT © [Anuj Jindal](https://www.linkedin.com/in/anuj-jindal-profile/)
 
 ## 🙋 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/publish-skills/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/publish-skills/discussions)
+- **Issues**: [GitHub Issues](https://github.com/jindalAnuj/publish-skills/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/jindalAnuj/publish-skills/discussions)
 - **LinkedIn**: [Anuj Jindal](https://www.linkedin.com/in/anuj-jindal-profile/)
+
+---
+
+## 🌐 Part of the Skills Ecosystem
+
+`publish-skills` is designed to work seamlessly with the **Vercel Labs skills** ecosystem:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Skills Ecosystem                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   CREATE          PUBLISH              DISCOVER        INSTALL   │
+│   ──────          ───────              ────────        ───────   │
+│                                                                  │
+│   SKILL.md   →   publish-skills   →   ClawHub     →   skills    │
+│                                        OpenClaw        (npx)     │
+│                                        GitHub                    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Skill Registries & Directories
+
+| Registry | Description |
+|----------|-------------|
+| [ClawHub](https://clawhub.ai) | 3,000+ OpenClaw skills with vector search |
+| [Awesome Agent Skills](https://awesomeagentskills.dev) | 26,000+ skills directory |
+| [Agent Skill Hub](https://agentskillhub.dev) | Universal registry for 790+ skills |
+| [Local Skills](https://localskills.sh) | Team-focused skill sharing |
 
 ---
 
 ## 🔗 Related
 
-- **[skills](https://www.npmjs.com/package/skills)** - The companion package manager for discovering and installing skills
-- **[skills GitHub repo](https://github.com/vercel-labs/skills)** - Skills package source and documentation
-- **[skills.sh](https://skills.sh)** - Skills directory and discovery
-- **[ROADMAP.md](./ROADMAP.md)** - Implementation plan and future features
-- **[PLAN.md](./PLAN.md)** - Requirements, architecture, and data models
+- **[skills](https://www.npmjs.com/package/skills)** - The companion package manager for discovering and installing skills (Vercel Labs)
+- **[vercel-labs/skills](https://github.com/vercel-labs/skills)** - Skills CLI source and documentation
+- **[OpenClaw](https://docs.openclaw.ai)** - OpenClaw ecosystem documentation
+- **[ROADMAP.md](./ROADMAP.md)** - Current features and future roadmap
+- **[MARKETING.md](./MARKETING.md)** - Marketing guide and directory submissions
 
 ---
 
@@ -331,6 +413,6 @@ MIT © [Anuj Jindal](https://www.linkedin.com/in/anuj-jindal-profile/)
 
 **Made with ❤️ for the AI agent community**
 
-[⭐ Star this repo](https://github.com/your-username/publish-skills) • [🐦 Follow on Twitter](https://twitter.com/your-handle) • [💼 Connect on LinkedIn](https://www.linkedin.com/in/anuj-jindal-profile/)
+[⭐ Star this repo](https://github.com/jindalAnuj/publish-skills) • [💼 Connect on LinkedIn](https://www.linkedin.com/in/anuj-jindal-profile/)
 
 </div>

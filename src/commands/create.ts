@@ -224,7 +224,7 @@ export const handler = async (argv: CreateArguments): Promise<void> => {
 
       if (!shouldOverwrite) {
         console.log(chalk.yellow('✗ Cancelled'));
-        process.exit(0);
+        return;
       }
     }
 
@@ -242,6 +242,6 @@ export const handler = async (argv: CreateArguments): Promise<void> => {
     console.log(`  3. Run: npx publish-skills publish .\n`);
   } catch (error) {
     console.error(chalk.red('Error:'), (error as Error).message);
-    process.exit(1);
+    throw error;
   }
 };

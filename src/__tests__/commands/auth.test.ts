@@ -24,27 +24,17 @@ describe('auth command', () => {
   });
 
   it('should handle unknown action', async () => {
-    const originalExit = process.exit;
-    const mockExit = jest.fn();
     const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
 
-    process.exit = mockExit as never;
+    const argv: AuthArguments = {
+      action: 'invalid-action',
+      _: [],
+      $0: '',
+    };
 
-    try {
-      const argv: AuthArguments = {
-        action: 'invalid-action',
-        _: [],
-        $0: '',
-      };
-
-      await authHandler(argv);
-
-      expect(mockExit).toHaveBeenCalledWith(1);
-      expect(mockConsoleError).toHaveBeenCalled();
-    } finally {
-      process.exit = originalExit;
-      mockConsoleError.mockRestore();
-    }
+    await expect(authHandler(argv)).rejects.toThrow('Unknown action: invalid-action');
+    expect(mockConsoleError).toHaveBeenCalled();
+    mockConsoleError.mockRestore();
   });
 
   it('should handle login action (would prompt for user input)', async () => {

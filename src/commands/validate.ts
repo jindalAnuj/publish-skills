@@ -160,7 +160,7 @@ export const handler = async (argv: ValidateArguments): Promise<void> => {
       console.log(
         `  Supported:   ${Object.keys(metadata.agentSupport || {}).join(', ') || 'None'}\n`
       );
-      process.exit(0);
+      return;
     } else {
       console.log(chalk.yellow(`\n⚠ Validation found ${allIssues.length} issue(s):\n`));
       for (const issue of allIssues) {
@@ -173,10 +173,10 @@ export const handler = async (argv: ValidateArguments): Promise<void> => {
       }
 
       console.log();
-      process.exit(1);
+      throw new Error('Validation failed');
     }
   } catch (error) {
     console.error(chalk.red('Error:'), (error as Error).message);
-    process.exit(1);
+    throw error;
   }
 };

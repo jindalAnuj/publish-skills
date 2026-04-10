@@ -10,7 +10,42 @@ import { handler as authHandler } from '../commands/auth';
 
 const parser = yargs(hideBin(process.argv))
   .scriptName('publish-skills')
-  .usage('$0 <cmd> [args]')
+  .usage('$0 [path] [options]')
+  .command(
+    ['$0 [path]', 'publish [path]'],
+    'Publish skills to a repository (default command)',
+    {
+      path: {
+        type: 'string',
+        describe: 'Path to the skill directory (omit to auto-detect from known locations)',
+      },
+      repo: { alias: 'r', type: 'string', describe: 'Named repository config to publish to' },
+      reset: {
+        type: 'boolean',
+        describe: 'Clear cached auth and repo config, start fresh',
+        default: false,
+      },
+      all: {
+        alias: 'a',
+        type: 'boolean',
+        describe: 'Publish all skills in the directory (non-interactive)',
+        default: false,
+      },
+      central: {
+        alias: 'c',
+        type: 'boolean',
+        describe: 'Publish to central skill hub repository',
+        default: false,
+      },
+      personal: {
+        alias: 'p',
+        type: 'boolean',
+        describe: 'Publish to personal repository',
+        default: false,
+      },
+    },
+    publishHandler
+  )
   .command(
     'create [name]',
     'Create a new skill from a template',
@@ -37,7 +72,12 @@ const parser = yargs(hideBin(process.argv))
         describe: 'Path to the skill directory',
         default: '.',
       },
-      verbose: { alias: 'v', type: 'boolean', describe: 'Show detailed validation output', default: false },
+      verbose: {
+        alias: 'v',
+        type: 'boolean',
+        describe: 'Show detailed validation output',
+        default: false,
+      },
     },
     validateHandler
   )
@@ -54,17 +94,7 @@ const parser = yargs(hideBin(process.argv))
     },
     authHandler
   )
-  .command(
-    'publish [path]',
-    'Publish a skill from a directory to a remote repository',
-    {
-      path: { type: 'string', describe: 'Path to the skill directory', default: '.' },
-      repo: { alias: 'r', type: 'string', describe: 'Named repository config to publish to' },
-      reset: { type: 'boolean', describe: 'Clear cached auth and repo config, start fresh', default: false },
-    },
-    publishHandler
-  )
-  .demandCommand(1, chalk.red('Error: You need at least one command before moving on'))
+  .demandCommand(0)
   .help()
   .alias('h', 'help')
   .alias('v', 'version')
