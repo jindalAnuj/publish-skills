@@ -2,7 +2,6 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import chalk from 'chalk';
 import { handler as publishHandler } from '../commands/publish';
 import { handler as createHandler } from '../commands/create';
 import { handler as validateHandler } from '../commands/validate';
