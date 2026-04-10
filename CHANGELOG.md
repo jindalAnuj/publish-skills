@@ -1,5 +1,11 @@
 # publish-skills
 
+## 1.3.0
+
+### Minor Changes
+
+- acecc8f: Added persitent github auth
+
 ## 1.2.0
 
 ### Minor Changes
