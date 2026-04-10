@@ -9,6 +9,11 @@ const SERVICE = 'publish-skills';
  * so CI pipelines work without a keyring.
  */
 export class CredentialManager {
+  static readonly serviceName = SERVICE;
+
+  /** keytar account name for GitHub OAuth / PAT tokens */
+  static readonly githubAccount = 'github';
+
   private platform: string;
 
   constructor() {
@@ -28,7 +33,8 @@ export class CredentialManager {
 
   public async getToken(account: string): Promise<string | null> {
     // Allow override via env var (useful for CI)
-    const envToken = process.env.PUBLISH_SKILLS_TOKEN;
+    const envToken =
+      process.env.PUBLISH_SKILLS_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim();
     if (envToken) return envToken;
 
     try {

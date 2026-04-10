@@ -101,6 +101,16 @@ jest.mock('../../validators/SkillValidator', () => ({
 
 const mockGetCentralRepository = jest.fn();
 
+const mockResolveGitHubSession = jest.fn();
+const mockPersistGitHubSession = jest.fn();
+const mockClearGitHubSession = jest.fn();
+
+jest.mock('../../auth/githubSession', () => ({
+  resolveGitHubSession: (...args: unknown[]): Promise<unknown> => mockResolveGitHubSession(...args),
+  persistGitHubSession: (...args: unknown[]): Promise<unknown> => mockPersistGitHubSession(...args),
+  clearGitHubSession: (...args: unknown[]): Promise<unknown> => mockClearGitHubSession(...args),
+}));
+
 jest.mock('../../config/ConfigManager', () => ({
   ConfigManager: jest.fn().mockImplementation(() => ({
     getAuthState: mockGetAuthState,
@@ -161,6 +171,20 @@ describe('publish command', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockResolveGitHubSession.mockImplementation(async () => {
+      const auth = mockGetAuthState();
+      if (auth?.token && auth?.login) {
+        return { token: auth.token, login: auth.login };
+      }
+      return undefined;
+    });
+    mockPersistGitHubSession.mockImplementation(
+      async (_cm: unknown, token: string, login: string) => {
+        mockSetAuthState({ token, login });
+      }
+    );
+    mockClearGitHubSession.mockResolvedValue(undefined);
 
     // Reset inquirer mocks to defaults
     mockInput.mockImplementation((options) => options.default || 'test-input');

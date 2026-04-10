@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import simpleGit from 'simple-git';
 import yargs from 'yargs';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -10,6 +11,11 @@ import { SkillValidator } from '../validators/SkillValidator';
 import { GitManager } from '../git/GitManager';
 import { PullRequestCreator } from '../git/PullRequestCreator';
 import { ConfigManager } from '../config/ConfigManager';
+import {
+  clearGitHubSession,
+  persistGitHubSession,
+  resolveGitHubSession,
+} from '../auth/githubSession';
 import {
   discoverSkills,
   discoverSkillsFromKnownLocations,
@@ -563,18 +569,23 @@ export const handler = async (argv: PublishArguments): Promise<void> => {
     const destName = destination === 'central' ? 'Central Skill Hub' : 'Personal Repository';
     printInfo(`Publishing to ${destEmoji} ${chalk.bold(destName)}`);
 
-    // ── 4. Auth — reuse saved token or run device flow ─────
+    // ── 4. Auth — env, keychain, config file, or device flow ─
     printStep(4, 5, 'Authentication');
     let token: string;
-    const savedAuth = argv.reset ? undefined : configManager.getAuthState();
 
-    if (savedAuth) {
-      token = savedAuth.token;
-      printInfo(`Signed in as ${chalk.bold.cyan(savedAuth.login)} ${chalk.gray('(cached)')}`);
+    if (argv.reset) {
+      await clearGitHubSession(configManager);
+    }
+
+    const savedSession = argv.reset ? undefined : await resolveGitHubSession(configManager);
+
+    if (savedSession) {
+      token = savedSession.token;
+      printInfo(`Signed in as ${chalk.bold.cyan(savedSession.login)} ${chalk.gray('(saved session)')}`);
     } else {
       const auth = await deviceFlowAuth();
       token = auth.token;
-      configManager.setAuthState({ token: auth.token, login: auth.login });
+      await persistGitHubSession(configManager, auth.token, auth.login);
     }
 
     // ── 5. Repo config — based on destination ──────────────
@@ -723,6 +734,41 @@ export const handler = async (argv: PublishArguments): Promise<void> => {
       repoConfig.url
     );
     spinner.succeed('Changes pushed');
+
+    // #region agent log
+    {
+      const g = simpleGit(repoConfig.localPath);
+      const baseRef = `refs/heads/${repoConfig.targetBranch}`;
+      const headRef = `refs/heads/${branchName}`;
+      const baseSha = await g.revparse([baseRef]).catch(() => 'missing');
+      const headSha = await g.revparse([headRef]).catch(() => 'missing');
+      const lsRemoteOut = await g
+        .raw(['ls-remote', 'origin', headRef])
+        .then((s) => s.trim().split(/\s+/)[0] ?? '')
+        .catch(() => 'ls-remote-failed');
+      fetch('http://127.0.0.1:7755/ingest/01a22d84-716b-4044-864b-cf522087267f', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '103d3e' },
+        body: JSON.stringify({
+          sessionId: '103d3e',
+          runId: 'pre-fix',
+          hypothesisId: 'D',
+          location: 'publish.ts:afterCommitAndPush',
+          message: 'compare base head and remote',
+          data: {
+            branchName,
+            baseBranch: repoConfig.targetBranch,
+            baseSha,
+            headSha,
+            shasEqual: baseSha === headSha,
+            originHeadSha: lsRemoteOut,
+            originMatchesLocalHead: lsRemoteOut === headSha,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    }
+    // #endregion
 
     // ── 11. Open Pull Request ───────────────────────────────
     spinner.start('📝 Creating pull request...');

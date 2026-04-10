@@ -5,6 +5,11 @@ import { select, input, confirm } from '@inquirer/prompts';
 import { Octokit } from '@octokit/rest';
 import { createOAuthDeviceAuth } from '@octokit/auth-oauth-device';
 import { ConfigManager } from '../config/ConfigManager';
+import {
+  clearGitHubSession,
+  persistGitHubSession,
+  resolveGitHubSession,
+} from '../auth/githubSession';
 import { AuthenticationError, isUserCancellation } from '../types';
 
 export interface AuthArguments extends yargs.Arguments {
@@ -51,12 +56,15 @@ async function handleGitHubLogin(): Promise<void> {
     const { data } = await octokit.rest.users.getAuthenticated();
     const login = data.login;
 
-    // Save credentials persistently using ConfigManager
     const configManager = new ConfigManager();
-    configManager.setAuthState({ token, login });
+    await persistGitHubSession(configManager, token, login);
 
     console.log(chalk.green(`✓ Logged in as ${chalk.bold(login)}\n`));
-    console.log(chalk.gray('  Your authentication is saved and will persist across restarts.\n'));
+    console.log(
+      chalk.gray(
+        '  Your session is saved (OS keychain when available, plus ~/.publish-skills/config.json).\n'
+      )
+    );
   } catch (error) {
     throw new AuthenticationError('Failed to verify GitHub credentials', { originalError: error });
   }
@@ -125,15 +133,15 @@ async function handleLogin(): Promise<void> {
  */
 async function handleLogout(): Promise<void> {
   const configManager = new ConfigManager();
+  const session = await resolveGitHubSession(configManager);
 
-  if (!configManager.isAuthenticated()) {
+  if (!session) {
     console.log(chalk.yellow('\n✗ Not currently logged in.\n'));
     return;
   }
 
-  const authState = configManager.getAuthState();
   const confirmed = await confirm({
-    message: `Remove authentication for ${authState?.login}?`,
+    message: `Remove stored authentication for ${session.login}?`,
     default: false,
   });
 
@@ -145,9 +153,19 @@ async function handleLogout(): Promise<void> {
   const spinner = ora('Removing authentication...').start();
 
   try {
-    configManager.clearAuthState();
+    const hasEnvToken = !!(
+      process.env.PUBLISH_SKILLS_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim()
+    );
+    await clearGitHubSession(configManager);
     spinner.succeed('Authentication removed');
     console.log(chalk.green('\n✓ Successfully logged out!\n'));
+    if (hasEnvToken) {
+      console.log(
+        chalk.yellow(
+          '  Note: GITHUB_TOKEN or PUBLISH_SKILLS_TOKEN is still set — exports remain valid until you unset them.\n'
+        )
+      );
+    }
   } catch (error) {
     spinner.fail('Failed to remove authentication');
     throw error;
@@ -161,14 +179,32 @@ async function handleStatus(): Promise<void> {
   console.log(chalk.cyan('\n🔐 Authentication Status\n'));
 
   const configManager = new ConfigManager();
+  const session = await resolveGitHubSession(configManager);
 
-  if (configManager.isAuthenticated()) {
-    const authState = configManager.getAuthState();
-    console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(authState?.login)}`));
-    console.log(chalk.gray('    Token is stored persistently in ~/.publish-skills/config.json\n'));
+  if (session) {
+    console.log(chalk.green(`  ✓ Logged in as ${chalk.bold(session.login)}`));
+    const viaEnv = !!(
+      process.env.PUBLISH_SKILLS_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim()
+    );
+    if (viaEnv) {
+      console.log(
+        chalk.gray('    Using token from GITHUB_TOKEN or PUBLISH_SKILLS_TOKEN (environment).\n')
+      );
+    } else {
+      console.log(
+        chalk.gray(
+          '    Session: OS keychain (if available) and/or ~/.publish-skills/config.json.\n'
+        )
+      );
+    }
   } else {
-    console.log(chalk.yellow('  ✗ Not logged in\n'));
+    console.log(chalk.yellow('  ✗ No usable stored session\n'));
     console.log(chalk.gray('  Run: publish-skills auth login\n'));
+    console.log(
+      chalk.gray(
+        '  Or set GITHUB_TOKEN / PUBLISH_SKILLS_TOKEN (e.g. `export GITHUB_TOKEN=$(gh auth token)`).\n'
+      )
+    );
   }
 }
 
